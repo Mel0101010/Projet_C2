@@ -12,12 +12,9 @@
 #define SERVER_ADDR "127.0.0.1"
 
 
-
-
-int main() {
+int sock_init() {
     int sock = 0;
     struct sockaddr_in serv_addr;
-    char buffer[1024] = {0};
 
     // Créer un socket
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -36,6 +33,18 @@ int main() {
     if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
         printf("\n Erreur de connexion \n");
         return -1;
+    }
+
+    return sock;
+}
+
+
+
+int main() {
+    char buffer[1024] = {0};
+    int sock = sock_init();
+    if (sock == -1) {
+        return EXIT_FAILURE;
     }
 
     char *declare = declare_connection();
