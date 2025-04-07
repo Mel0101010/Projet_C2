@@ -38,6 +38,14 @@ int sock_init() {
     return sock;
 }
 
+char * send_declare(int sock, char *declare, char * buffer) {
+    send(sock, declare, strlen(declare), 0);
+    read(sock, buffer, 1024);
+    return buffer;
+}
+
+
+
 
 
 int main() {
@@ -46,13 +54,13 @@ int main() {
     if (sock == -1) {
         return EXIT_FAILURE;
     }
-
     char *declare = declare_connection();
-    send(sock, declare, strlen(declare), 0);
-    printf("Message envoyé : %s\n", declare);
+    send_declare(sock, declare, buffer);
+    printf("Message du serveur : %s\n", buffer);
+    strtok(buffer, ",");
+    char * user_ID = strtok(NULL, ",");
+    printf("%s", user_ID);
 
-    read(sock, buffer, 1024);
-    printf("Message reçu : %s\n", buffer);
 
     close(sock);
     return 0;
