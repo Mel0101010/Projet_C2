@@ -43,12 +43,13 @@ char * declare_connection() {
     printf("Username: %s\n", username);
     printf("Hostname: %s\n", hostname);
     printf("OS Info: %s\n", os);
-    // Create the connection string
+
     char *connection_string = malloc(512);
     if (connection_string == NULL) {
         perror("Failed to allocate memory for connection string");
         return NULL;
     }
-    snprintf(connection_string, 512, "DECLARE,%s,%s,%s", username, hostname, os);
+
+    snprintf(connection_string, 512, "DECLARE,%s,%s,%s\n", username, hostname, os);
     return connection_string;
 }
