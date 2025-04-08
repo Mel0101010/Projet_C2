@@ -30,12 +30,21 @@ void encoder_base64(const char *input, char **output) {
 }
 
 void decoder_base64(const char *input, char **output) {
-	BIO *b64 = BIO_new(BIO_f_base64());
-	BIO *bmem = BIO_new_mem_buf(input, strlen(input));
-	bmem = BIO_push(b64, bmem);
+    // Allocate memory for the output
+    *output = malloc(strlen(input) + 1);
+    if (*output == NULL) {
+        perror("Memory allocation failed");
+        return;
+    }
 
-	int length = BIO_read(bmem, *output, strlen(input));
-	(*output)[length] = '\0';
+    BIO *b64 = BIO_new(BIO_f_base64());
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL); // Ignore newlines
 
-	BIO_free_all(bmem);
+    BIO *bmem = BIO_new_mem_buf(input, strlen(input));
+    bmem = BIO_push(b64, bmem);
+
+    int length = BIO_read(bmem, *output, strlen(input));
+    (*output)[length] = '\0';
+
+    BIO_free_all(bmem);
 }
