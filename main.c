@@ -4,6 +4,7 @@
 #include "declare.h"
 #include "fetch.h"
 #include "connexion.h"
+#include "choice.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,13 +46,17 @@ int main() {
     	if (sock_fetch == -1) {
     	    return EXIT_FAILURE;
     	}
-
     	char * commande_fetch = fetch_connection(user_ID);
     	printf("Commande FETCH : %s\n", commande_fetch);
     	char * buffer_fetch = malloc(1024);
 		send_message(sock_fetch, commande_fetch, buffer_fetch);
     	printf("Message du serveur : %s\n", buffer_fetch);
     	close(sock_fetch);
+
+		choice(buffer_fetch, user_ID);
+
+
+        free(buffer_fetch);
     }
     return EXIT_SUCCESS;
 }
