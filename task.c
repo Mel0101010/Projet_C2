@@ -4,8 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 
-int task_sleep() {
-    char cmd[] = "task,sleep,fcc3f516b7,5,2";
+int task_sleep(char cmd[]) {
     srand(time(NULL));
     char* premier_mot = strtok(cmd, ",");
     char* deuxieme_mot = strtok(NULL, ",");
@@ -40,11 +39,10 @@ int task_sleep() {
     }
 
            temps_total, temps_base, valeur_variation;
-    sleep(temps_total);
-    return 0;
+
+    return temps_total;
 }
 
 int main() {
-    int task_sleep();
-    printf("\n",task_sleep());
+    sleep(task_sleep("task,sleep,AZE23,12,2"));
 }
