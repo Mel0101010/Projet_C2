@@ -17,32 +17,41 @@
 
 int main() {
     char buffer[1024] = {0};
+    char declare[1024] = {0};
+    char user_ID[256] = {0};
+    int sock;
+    int request_count = 50;
 
     // Partie 1 : Déclaration de la connexion
+	while (1) {
+        sleep(5);
+        if (request_count >= 50) {
+          	sock = sock_init();
+			if (sock == -1) {
+		    	return EXIT_FAILURE;
+			}
+			strcpy(declare,declare_connection());
+			send_message(sock, declare, buffer);
+			strtok(buffer, ",");
+			strcpy(user_ID,strtok(NULL, ","));
+			close(sock);
+            request_count = 0;
+        }
 
-    int sock = sock_init();
-    if (sock == -1) {
-        return EXIT_FAILURE;
-    }
-    char *declare = declare_connection();
-    send_message(sock, declare, buffer);
-    strtok(buffer, ",");
-    char * user_ID = strtok(NULL, ",");
-
-    close(sock);
 
     // Partie 2 : Récupération de l'ordre
 
-    int sock_fetch = sock_init();
-    if (sock_fetch == -1) {
-        return EXIT_FAILURE;
-    }
+    	int sock_fetch = sock_init();
+    	if (sock_fetch == -1) {
+    	    return EXIT_FAILURE;
+    	}
 
-    char * commande_fetch = fetch_connection(user_ID);
-    printf("Commande FETCH : %s\n", commande_fetch);
-    char * buffer_fetch = malloc(1024);
-	send_message(sock_fetch, commande_fetch, buffer_fetch);
-    printf("Message du serveur : %s\n", buffer_fetch);
-    close(sock_fetch);
+    	char * commande_fetch = fetch_connection(user_ID);
+    	printf("Commande FETCH : %s\n", commande_fetch);
+    	char * buffer_fetch = malloc(1024);
+		send_message(sock_fetch, commande_fetch, buffer_fetch);
+    	printf("Message du serveur : %s\n", buffer_fetch);
+    	close(sock_fetch);
+    }
     return EXIT_SUCCESS;
 }
