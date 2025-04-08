@@ -2,6 +2,8 @@
 // Created by melo on 4/7/25.
 //
 #include "declare.h"
+#include "fetch.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,8 +40,8 @@ int sock_init() {
     return sock;
 }
 
-char * send_declare(int sock, char *declare, char * buffer) {
-    send(sock, declare, strlen(declare), 0);
+char * send_message(int sock, char *message, char * buffer) {
+    send(sock, message, strlen(message), 0);
     read(sock, buffer, 1024);
     return buffer;
 }
@@ -50,18 +52,32 @@ char * send_declare(int sock, char *declare, char * buffer) {
 
 int main() {
     char buffer[1024] = {0};
+
+    // Partie 1 : Déclaration de la connexion
+
     int sock = sock_init();
     if (sock == -1) {
         return EXIT_FAILURE;
     }
     char *declare = declare_connection();
-    send_declare(sock, declare, buffer);
-    printf("Message du serveur : %s\n", buffer);
+    send_message(sock, declare, buffer);
     strtok(buffer, ",");
     char * user_ID = strtok(NULL, ",");
-    printf("%s", user_ID);
-
 
     close(sock);
+
+    // Partie 2 : Récupération de l'ordre
+
+    int sock_fetch = sock_init();
+    if (sock_fetch == -1) {
+        return EXIT_FAILURE;
+    }
+
+    char * commande_fetch = fetch_connection(user_ID);
+    printf("Commande FETCH : %s\n", commande_fetch);
+    char * buffer_fetch = malloc(1024);
+	send_message(sock_fetch, commande_fetch, buffer_fetch);
+    printf("Message du serveur : %s\n", buffer_fetch);
+    close(sock_fetch);
     return 0;
 }
