@@ -3,12 +3,12 @@
 //
 
 #include "choice.h"
+
 #include <string.h>
 #include <stdio.h>
 
 void choice(char * buffer_fetch, char * user_ID) {
-	char * commande = strtok(buffer_fetch, ",");
-
+    char * commande = strtok(buffer_fetch, ",");
     if (strcmp(commande, "SLEEP") == 0) {
 		printf("dors connard\n");
     }
