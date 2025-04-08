@@ -43,7 +43,6 @@ int sock_init() {
 char * send_message(int sock, char *message, char * buffer) {
     send(sock, message, strlen(message), 0);
     read(sock, buffer, 1024);
-    printf("%s", buffer);
     return buffer;
 }
 
@@ -53,26 +52,32 @@ char * send_message(int sock, char *message, char * buffer) {
 
 int main() {
     char buffer[1024] = {0};
+
+    // Partie 1 : Déclaration de la connexion
+
     int sock = sock_init();
     if (sock == -1) {
         return EXIT_FAILURE;
     }
-
-    // Partie 1 : Déclaration de la connexion
-
     char *declare = declare_connection();
     send_message(sock, declare, buffer);
     strtok(buffer, ",");
     char * user_ID = strtok(NULL, ",");
 
+    close(sock);
+
     // Partie 2 : Récupération de l'ordre
+
+    int sock_fetch = sock_init();
+    if (sock_fetch == -1) {
+        return EXIT_FAILURE;
+    }
 
     char * commande_fetch = fetch_connection(user_ID);
     printf("Commande FETCH : %s\n", commande_fetch);
-    sleep(20);
-	send_message(sock, commande_fetch, buffer);
-    printf("Message du serveur : %s\n", buffer);
-	// Non Fonctionnel : Message du serveur == OK. Ca devrait etre erreur
-    close(sock);
+    char * buffer_fetch = malloc(1024);
+	send_message(sock_fetch, commande_fetch, buffer_fetch);
+    printf("Message du serveur : %s\n", buffer_fetch);
+    close(sock_fetch);
     return 0;
 }
