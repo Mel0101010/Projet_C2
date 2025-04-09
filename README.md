@@ -1,58 +1,67 @@
-# C2 Client Implementation Presentation
+# C2 Client - Command and Control Client Implementation
 
-## Project Overview
+## Overview
+A lightweight command and control client written in C that establishes a secure connection to a remote server, processes commands, and executes various system tasks. This client implements a robust architecture for remote system management.
 
-This presentation covers a Command and Control (C2) client implementation written in C. The project demonstrates network communication, remote command execution, and system interaction capabilities.
+## Features
+- ✅ System information collection (username, hostname, OS details)
+- ✅ Command execution via secure channels
+- ✅ File operations (read, delete, move)
+- ✅ Reverse shell capabilities
+- ✅ Base64 encoding/decoding for secure parameter transmission
+- ✅ Persistent connection with heartbeat mechanism
+- ✅ Task-based execution model with unique IDs
 
 ## Architecture
+The client follows a modular design with components for:
+- Connection declaration and maintenance
+- Command fetching and processing
+- Task execution
+- Result reporting
+- Security encoding/decoding
 
-The system follows a client-server architecture:
-- **C2 Server**: Central control node that issues commands
-- **Client Agent**: Connects to the server, processes commands, and reports results
-- **Communication Protocol**: Text-based, comma-delimited format
-- **Task-based Workflow**: Commands are processed as discrete tasks with unique IDs
+## Dependencies
+- GCC compiler
+- OpenSSL library (for Base64 encoding/decoding)
+- Linux-based operating system
 
-## Communication Flow
+## Building
+```bash
+make clean && make
+```
 
-1. **Declaration**: Client registers with server providing system information
-2. **Fetch**: Client regularly polls for new commands
-3. **Command Processing**: Client executes received commands
-4. **Reporting**: Results are sent back to the server
+## Usage
+Simply run the compiled binary:
+```bash
+./bot_client
+```
 
-## Key Features
+The client automatically:
+1. Declares itself to the C2 server
+2. Retrieves commands periodically
+3. Executes received commands
+4. Reports results back to the server
 
-- **System Information Collection**: Username, hostname, OS details
-- **File Operations**: Read (CAT), remove (RM), move (MV) files
-- **Command Execution**: Run shell commands via EXECVE
-- **Reverse Shell**: Create interactive shell connections
-- **Sleep Functionality**: Implement timing controls
-- **Base64 Encoding**: For secure parameter transmission
+## Supported Commands
+| Command | Description | Format |
+|---------|-------------|--------|
+| SLEEP | Pause execution | `SLEEP,<task_id>,<seconds_base64>,<random_base64>` |
+| CAT | Read file contents | `CAT,<task_id>,<file_path_base64>` |
+| RM | Delete a file | `RM,<task_id>,<file_path_base64>` |
+| MV | Move/rename a file | `MV,<task_id>,<src_path_base64>,<dst_path_base64>` |
+| EXECVE | Execute system command | `EXECVE,<task_id>,<command_base64>,<args_base64>` |
+| REVSHELL | Create reverse shell | `REVSHELL,<task_id>,<port_base64>,<ip_base64>` |
 
-## Technical Implementation
+## Security Notes
+- All sensitive parameters are Base64 encoded
+- Command execution is sandboxed
+- Results are reported securely to the C2 server
 
-- **Modular Design**: Separate components for different functionalities
-- **Memory Management**: Careful allocation/deallocation
-- **Error Handling**: Comprehensive checks and error reporting
-- **Network Communication**: Socket programming for client-server interaction
-- **Process Management**: For command execution and reverse shells
+## Communication Protocol
+The client uses a simple text-based protocol for server communication:
+1. `DECLARE,<username>,<hostname>,<os_info>` - Client registration
+2. `FETCH,<user_id>` - Command polling
+3. `RESULT,<user_id>,<task_id>,<result_data>` - Command results
 
-## Security Considerations
-
-- **Parameter Encoding**: Base64 for transmission security
-- **Task Identifiers**: Tracking command execution
-- **Connection Management**: Proper socket handling
-
-## Development Challenges
-
-- **Memory Safety**: Preventing leaks in string operations
-- **Error Handling**: Graceful recovery from network failures
-- **Command Parsing**: Handling complex command formats
-- **Process Execution**: Managing subprocesses securely
-
-## Demo Introduction
-
-The following code demonstration will show:
-1. How the client connects to the C2 server
-2. Command processing implementation
-3. Task execution and result handling
-4. Base64 encoding/decoding mechanisms
+## License
+This project is licensed under the GNU General Public License v3 (GPL-3.0)
