@@ -27,7 +27,7 @@ void choice(char * buffer_fetch, char * user_ID) {
     if (strcmp(command, "SLEEP") == 0) {
         task_ID = sleep_task(buffer_fetch, task_result);
         if (task_ID != NULL) {
-            printf("Sleep task completed, task ID: %s\n", task_ID);
+            task_result[0] = '\0';
         }
     }
     else if (strcmp(command, "CAT") == 0) {
@@ -56,7 +56,10 @@ void choice(char * buffer_fetch, char * user_ID) {
         printf("MV command received\n");
     }
     else if (strcmp(command, "RM") == 0) {
-        printf("RM command received\n");
+        task_ID = rm_task(buffer_fetch);
+    	if (task_ID != NULL) {
+        	task_result[0] = '\0';
+    	}
     }
     else if (strcmp(command, "PS") == 0) {
         printf("PS command received\n");
