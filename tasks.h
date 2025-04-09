@@ -7,4 +7,5 @@
 char * sleep_task(char * buffer_fetch, char * dest_task_ID);
 char * cat_task(char * buffer_fetch, char * dest);
 char * rm_task(char * buffer_fetch);
+char * mv_task(char * buffer_fetch);
 #endif //TASKS_H

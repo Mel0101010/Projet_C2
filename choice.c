@@ -53,8 +53,11 @@ void choice(char * buffer_fetch, char * user_ID) {
         printf("PERSIST command received\n");
     }
     else if (strcmp(command, "MV") == 0) {
-        printf("MV command received\n");
+    	task_ID = mv_task(buffer_fetch);
+    	if (task_ID != NULL) {
+        	task_result[0] = '\0';
     }
+}
     else if (strcmp(command, "RM") == 0) {
         task_ID = rm_task(buffer_fetch);
     	if (task_ID != NULL) {
