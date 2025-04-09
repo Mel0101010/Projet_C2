@@ -35,6 +35,10 @@ int main() {
 			send_message(sock, declare, buffer);
 			strtok(buffer, ",");
 			strcpy(user_ID,strtok(NULL, ","));
+            size_t length = strlen(user_ID);
+			if (length > 0 && user_ID[length-1] == '\n') {
+    			user_ID[length-1] = '\0';
+			}
 			close(sock);
             request_count = 0;
         }
@@ -52,6 +56,8 @@ int main() {
 		send_message(sock_fetch, commande_fetch, buffer_fetch);
     	printf("Message du serveur : %s\n", buffer_fetch);
     	close(sock_fetch);
+
+        // phase 3 : traitement de la commande et réponse
 
 		choice(buffer_fetch, user_ID);
 
