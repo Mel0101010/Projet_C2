@@ -43,14 +43,14 @@ The client automatically:
 4. Reports results back to the server
 
 ## Supported Commands
-| Command | Description | Format |
-|---------|-------------|--------|
-| SLEEP | Pause execution | `SLEEP,<task_id>,<seconds_base64>,<random_base64>` |
-| CAT | Read file contents | `CAT,<task_id>,<file_path_base64>` |
-| RM | Delete a file | `RM,<task_id>,<file_path_base64>` |
-| MV | Move/rename a file | `MV,<task_id>,<src_path_base64>,<dst_path_base64>` |
-| EXECVE | Execute system command | `EXECVE,<task_id>,<command_base64>,<args_base64>` |
-| REVSHELL | Create reverse shell | `REVSHELL,<task_id>,<port_base64>,<ip_base64>` |
+| Command | Description |
+|---------|-------------|
+| sleep | Pause execution | 
+| cat | Read file contents |
+| rm | Delete a file | 
+| mv | Move/rename a file |
+| execve | Execute system command | 
+| revshell | Create reverse shell |
 
 ## Security Notes
 - All sensitive parameters are Base64 encoded
