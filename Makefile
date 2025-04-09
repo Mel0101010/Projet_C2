@@ -3,7 +3,7 @@ CFLAGS = -g
 LDFLAGS = -lssl -lcrypto
 
 # Source files
-SRCS = main.c declare.c connexion.c choice.c fetch.c base64.c
+SRCS = main.c declare.c connexion.c choice.c fetch.c base64.c tasks.c
 
 # Object files
 OBJS = $(SRCS:.c=.o)
